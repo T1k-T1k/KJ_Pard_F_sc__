@@ -85,28 +85,25 @@ local function toggleAutoFarm()
                 local terrain = workspace:FindFirstChild("Terrain")
                 if terrain then
                     local pumpkins = {} -- Массив для хранения тыкв
-                    -- Перебираем все объекты в Terrain
-                    for _, terrainObject in pairs(terrain:GetChildren()) do
-                        if terrainObject:IsA("Model") and terrainObject.Name == "Pumpkin" then
-                            local primaryPart = terrainObject:FindFirstChild("PrimaryPart") -- Проверяем наличие PrimaryPart
+                    -- Проходим по всем детям Terrain
+                    for _, object in pairs(terrain:GetChildren()) do
+                        if object:IsA("Model") and object.Name == "Pumpkin" then
+                            local primaryPart = object:FindFirstChild("PrimaryPart") -- Проверяем наличие PrimaryPart
                             if primaryPart then
-                                table.insert(pumpkins, terrainObject)  -- Добавляем тыкву в список
+                                local targetPosition = primaryPart.Position + Vector3.new(0, 5, 0)  -- Позиция тыквы + смещение по оси Y
+
+                                -- Печать найденной позиции
+                                print("Moving to Pumpkin at:", targetPosition)
+
+                                -- Перемещаем персонажа
+                                humanoidRootPart.CFrame = CFrame.new(targetPosition)
+
+                                -- Ожидаем небольшое время перед движением к следующей тыкве
+                                wait(1)
+                            else
+                                print("No PrimaryPart found for pumpkin.")
                             end
                         end
-                    end
-
-                    -- Если тыквы найдены
-                    if #pumpkins > 0 then
-                        local targetPumpkin = pumpkins[math.random(1, #pumpkins)]  -- Выбираем случайную тыкву
-                        local targetPosition = targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)  -- Позиция тыквы + смещение по оси Y
-
-                        -- Печать найденной позиции
-                        print("Moving to Pumpkin at:", targetPosition)
-
-                        -- Перемещаем персонажа
-                        humanoidRootPart.CFrame = CFrame.new(targetPosition)
-                    else
-                        print("No pumpkins found")
                     end
                 end
                 wait(0.5)  -- Задержка перед следующим поиском
