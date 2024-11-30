@@ -82,27 +82,24 @@ local function toggleAutoFarm()
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local terrain = workspace:FindFirstChild("Terrain")
-                if terrain then
-                    local pumpkins = {}
-                    for _, pumpkin in ipairs(terrain:GetChildren()) do
-                        if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
-                            table.insert(pumpkins, pumpkin)
-                        end
+                local pumpkins = {} -- Убираем нахождение только в Terrain, ищем в workspace
+                for _, pumpkin in ipairs(workspace:GetChildren()) do
+                    if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
+                        table.insert(pumpkins, pumpkin)
                     end
+                end
 
-                    if #pumpkins > 0 then
-                        local targetPumpkin = pumpkins[math.random(#pumpkins)]
-                        local targetPosition = targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)
+                if #pumpkins > 0 then
+                    local targetPumpkin = pumpkins[math.random(#pumpkins)]
+                    local targetPosition = targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)
 
-                        print("Moving to Pumpkin at:", targetPosition) -- Проверка координат тыквы
+                    print("Moving to Pumpkin at:", targetPosition) -- Проверка координат тыквы
 
-                        humanoidRootPart.CFrame = CFrame.new(targetPosition)
-                        wait(2)  -- Задержка перед следующим поиском
-                    else
-                        print("No pumpkins found")
-                        wait(1)
-                    end
+                    humanoidRootPart.CFrame = CFrame.new(targetPosition)
+                    wait(2)  -- Задержка перед следующим поиском
+                else
+                    print("No pumpkins found")
+                    wait(1)
                 end
                 wait(0.5)
             end
