@@ -82,10 +82,10 @@ local function toggleAutoFarm()
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local pumpkins = {} -- Убираем нахождение только в Terrain, ищем в workspace
-                for _, pumpkin in ipairs(workspace:GetChildren()) do
-                    if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
-                        table.insert(pumpkins, pumpkin)
+                local pumpkins = {} -- Ищем тыквы в Terrain
+                for _, terrainObject in ipairs(workspace.Terrain:GetChildren()) do
+                    if terrainObject:IsA("Model") and terrainObject:FindFirstChild("PrimaryPart") and terrainObject.Name == "Pumpkin" then
+                        table.insert(pumpkins, terrainObject)
                     end
                 end
 
