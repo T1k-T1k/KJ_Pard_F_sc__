@@ -105,12 +105,12 @@ local function toggleAutoFarm()
                 for _, pumpkin in pairs(pumpkins) do
                     if pumpkin:IsA("Model") and pumpkin.PrimaryPart and pumpkin.Name == "Pumpkin" then
                         humanoidRootPart.CFrame = pumpkin.PrimaryPart.CFrame + Vector3.new(0, 2.5, 0)
-                        wait(0.4)
+                        wait(1.5)
                         humanoidRootPart.CFrame = CFrame.new(platformPosition + Vector3.new(0, 5, 0))
-                        wait(0.4)
+                        wait(1.5)
                     end
                 end
-                wait(0.1)
+                wait(0.5)
             end
         end)
     end
