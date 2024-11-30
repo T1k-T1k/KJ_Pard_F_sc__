@@ -68,46 +68,44 @@ minimizeButton.MouseButton1Click:Connect(function()
 end)
 
 local function toggleAutoFarm()
-    if debounce then return end  -- Блокировка повторных нажатий
+    if debounce then return end
     debounce = true
-    
-    autoFarmEnabled = not autoFarmEnabled  -- Переключение состояния
 
-    -- toggle анимация кнопки
+    autoFarmEnabled = not autoFarmEnabled
+    
+    -- Анимация ползунка
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-    local tween = tweenService:Create(toggleButton, TweenInfo.new(0.3), {Position = targetPosition})
+    local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
+
+    print("AutoFarm Enabled:", autoFarmEnabled) -- Проверка состояния фарма
     
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local terrain = workspace:FindFirstChild("Terrain")  -- Ищем Terrain
+                local terrain = workspace:FindFirstChild("Terrain")
                 if terrain then
-                    local pumpkins = {}  -- Список тыкв
+                    local pumpkins = {}
                     for _, pumpkin in ipairs(terrain:GetChildren()) do
                         if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
-                            table.insert(pumpkins, pumpkin)  -- Добавляем тыкву в список
+                            table.insert(pumpkins, pumpkin)
                         end
                     end
 
-                    -- Если тыквы найдены
                     if #pumpkins > 0 then
-                        local targetPumpkin = pumpkins[math.random(#pumpkins)]  -- Случайная тыква
-                        local targetCFrame = CFrame.new(targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
+                        local targetPumpkin = pumpkins[math.random(#pumpkins)]
+                        local targetPosition = targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)
                         
-                        -- Создаём tween для плавного перемещения
-                        local tweenInfo = TweenInfo.new(2)  -- Длительность 2 секунды
-                        local goal = {CFrame = targetCFrame}
-                        local moveTween = tweenService:Create(humanoidRootPart, tweenInfo, goal)
+                        print("Moving to Pumpkin at:", targetPosition) -- Проверка координат тыквы
                         
-                        moveTween:Play()
-                        moveTween.Completed:Wait()  -- Ждём завершения tween перед переходом к следующей тыкве
+                        humanoidRootPart.CFrame = CFrame.new(targetPosition)
+                        wait(2)  -- Задержка перед следующим поиском
                     else
-                        -- Если тыкв нет, остаёмся на месте
+                        print("No pumpkins found")
                         wait(1)
                     end
                 end
-                wait(0.5)  -- Проверка каждые 0.5 секунд
+                wait(0.5)
             end
         end)
     end
@@ -115,9 +113,9 @@ local function toggleAutoFarm()
     debounce = false
 end
 
--- Обработчик клика по ползунку
+-- Обработка нажатия на ползунок
 toggleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleAutoFarm()  -- Включение/выключение автофарма
+        toggleAutoFarm()
     end
 end)
