@@ -1,6 +1,8 @@
+-- Start script
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local runService = game:GetService("RunService")
 local tweenService = game:GetService("TweenService")
 local autoFarmEnabled = false
 local debounce = false
@@ -65,24 +67,14 @@ minimizeButton.MouseButton1Click:Connect(function()
     tween:Play()
 end)
 
--- Function to move to a pumpkin
-local function moveToPumpkin(pumpkin)
-    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)  -- Время движения к тыкве
-    local targetPosition = pumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)
-    local targetCFrame = CFrame.new(targetPosition)
-    local tween = tweenService:Create(humanoidRootPart, tweenInfo, {CFrame = targetCFrame})
-    tween:Play()
-    tween.Completed:Wait()  -- Ждем окончания движения
-end
-
--- Main functional
+-- Функция для автоматического фарма
 local function toggleAutoFarm()
-    if debounce then return end
+    if debounce then return end  -- Блокировка повторных нажатий
     debounce = true
     
     autoFarmEnabled = not autoFarmEnabled
-
-    -- toggle animation
+    
+    -- toggle анимация кнопки
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
     local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
@@ -90,20 +82,16 @@ local function toggleAutoFarm()
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local pumpkins = {}
-                for _, object in pairs(workspace:GetChildren()) do
-                    if object:IsA("Model") and object:FindFirstChild("PrimaryPart") and object.Name == "Pumpkin" then
-                        table.insert(pumpkins, object)
+                local terrain = workspace:FindFirstChild("Terrain")  -- Находим Terrain
+                if terrain then
+                    for _, pumpkin in ipairs(terrain:GetChildren()) do
+                        if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
+                            humanoidRootPart.CFrame = CFrame.new(pumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
+                            wait(0.5)  -- Небольшая задержка для взаимодействия с тыквой
+                        end
                     end
                 end
-                
-                if #pumpkins > 0 then
-                    local pumpkin = pumpkins[math.random(1, #pumpkins)]
-                    moveToPumpkin(pumpkin)
-                    wait(1.5)  -- Пауза перед выбором следующей тыквы
-                else
-                    break  -- Если тыквы отсутствуют, прекращаем фарм
-                end
+                wait(1)  -- Проверка раз в секунду
             end
         end)
     end
