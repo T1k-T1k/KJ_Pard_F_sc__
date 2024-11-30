@@ -67,7 +67,6 @@ minimizeButton.MouseButton1Click:Connect(function()
     tween:Play()
 end)
 
--- Функция для автоматического фарма
 local function toggleAutoFarm()
     if debounce then return end  -- Блокировка повторных нажатий
     debounce = true
@@ -82,16 +81,33 @@ local function toggleAutoFarm()
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local terrain = workspace:FindFirstChild("Terrain")  -- Находим Terrain
+                local terrain = workspace:FindFirstChild("Terrain")  -- Ищем Terrain
                 if terrain then
+                    local pumpkins = {}  -- Список тыкв
                     for _, pumpkin in ipairs(terrain:GetChildren()) do
                         if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
-                            humanoidRootPart.CFrame = CFrame.new(pumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
-                            wait(0.5)  -- Небольшая задержка для взаимодействия с тыквой
+                            table.insert(pumpkins, pumpkin)  -- Добавляем тыкву в список
                         end
                     end
+
+                    -- Если тыквы найдены
+                    if #pumpkins > 0 then
+                        local targetPumpkin = pumpkins[math.random(#pumpkins)]  -- Случайная тыква
+                        local targetCFrame = CFrame.new(targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
+                        
+                        -- Создаём tween для плавного перемещения
+                        local tweenInfo = TweenInfo.new(2)  -- Длительность 2 секунды
+                        local goal = {CFrame = targetCFrame}
+                        local moveTween = tweenService:Create(humanoidRootPart, tweenInfo, goal)
+                        
+                        moveTween:Play()
+                        moveTween.Completed:Wait()  -- Ждём завершения tween перед переходом к следующей тыкве
+                    else
+                        -- Если тыкв нет, остаёмся на месте
+                        wait(1)
+                    end
                 end
-                wait(1)  -- Проверка раз в секунду
+                wait(0.5)  -- Проверка каждые 0.5 секунд
             end
         end)
     end
