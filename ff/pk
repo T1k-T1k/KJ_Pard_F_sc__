@@ -5,14 +5,19 @@ local tweenService = game:GetService("TweenService")
 local autoFarmEnabled = false
 local debounce = false
 
--- GUI
+-- GUI create
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
+-- upper panel
 local topFrame = Instance.new("Frame", screenGui)
 topFrame.Size = UDim2.new(0, 300, 0, 30)
 topFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
 topFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+topFrame.BorderSizePixel = 0
+topFrame.Draggable = true
+topFrame.Active = true
 
+-- text and a button to minimization
 local title = Instance.new("TextLabel", topFrame)
 title.Size = UDim2.new(1, -35, 1, 0)
 title.Text = "Auto Farm Pumpkins"
@@ -20,32 +25,64 @@ title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BackgroundTransparency = 1
 title.TextScaled = true
 
-local toggleFrame = Instance.new("Frame", topFrame)
+local minimizeButton = Instance.new("TextButton", topFrame)
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -30, 0, 0)
+minimizeButton.Text = "-"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.BackgroundTransparency = 1
+
+-- toggle
+local sliderFrame = Instance.new("Frame", topFrame)
+sliderFrame.Size = UDim2.new(1, 0, 0, 70)
+sliderFrame.Position = UDim2.new(0, 0, 1, 0)
+sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+sliderFrame.BorderSizePixel = 0
+
+local toggleFrame = Instance.new("Frame", sliderFrame)
 toggleFrame.Size = UDim2.new(0.6, 0, 0.4, 0)
-toggleFrame.Position = UDim2.new(0.2, 0, 1, 0)
+toggleFrame.Position = UDim2.new(0.2, 0, 0.3, 0)
 toggleFrame.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
 toggleFrame.BorderSizePixel = 0
 toggleFrame.ClipsDescendants = true
 
 local toggleButton = Instance.new("Frame", toggleFrame)
 toggleButton.Size = UDim2.new(0.4, 0, 1, 0)
+toggleButton.Position = UDim2.new(0, 0, 0, 0)
 toggleButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
 local buttonCorner = Instance.new("UICorner", toggleButton)
 buttonCorner.CornerRadius = UDim.new(1, 0)
 
+local toggleCorner = Instance.new("UICorner", toggleFrame)
+toggleCorner.CornerRadius = UDim.new(0, 20)
+
+-- minimization animation
+local isMinimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    local newSize = isMinimized and UDim2.new(1, 0, 0, 0) or UDim2.new(1, 0, 0, 70)
+    local tween = tweenService:Create(sliderFrame, TweenInfo.new(0.5), {Size = newSize})
+    tween:Play()
+end)
+
+-- Function to move to a pumpkin
 local function moveToPumpkin(pumpkin)
-    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)  -- 3 секунды на полет
-    local targetCFrame = CFrame.new(pumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
+    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)  -- Время движения к тыкве
+    local targetPosition = pumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0)
+    local targetCFrame = CFrame.new(targetPosition)
     local tween = tweenService:Create(humanoidRootPart, tweenInfo, {CFrame = targetCFrame})
     tween:Play()
-    tween.Completed:Wait()  -- Дождаться завершения движения
+    tween.Completed:Wait()  -- Ждем окончания движения
 end
 
+-- Main functional
 local function toggleAutoFarm()
     if debounce then return end
     debounce = true
     
     autoFarmEnabled = not autoFarmEnabled
+
+    -- toggle animation
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
     local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
@@ -63,9 +100,9 @@ local function toggleAutoFarm()
                 if #pumpkins > 0 then
                     local pumpkin = pumpkins[math.random(1, #pumpkins)]
                     moveToPumpkin(pumpkin)
-                    wait(1.5)  -- Ожидание перед следующей целью
+                    wait(1.5)  -- Пауза перед выбором следующей тыквы
                 else
-                    break  -- Тыквы закончились
+                    break  -- Если тыквы отсутствуют, прекращаем фарм
                 end
             end
         end)
