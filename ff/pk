@@ -71,40 +71,43 @@ local function toggleAutoFarm()
     if debounce then return end  -- Блокировка повторных нажатий
     debounce = true
     
-    autoFarmEnabled = not autoFarmEnabled
-    
-    -- Анимация ползунка
+    autoFarmEnabled = not autoFarmEnabled  -- Переключение состояния
+
+    -- toggle анимация кнопки
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-    local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
+    local tween = tweenService:Create(toggleButton, TweenInfo.new(0.3), {Position = targetPosition})
     tween:Play()
     
     if autoFarmEnabled then
         spawn(function()
             while autoFarmEnabled do
-                local terrain = workspace:FindFirstChild("Terrain")
+                local terrain = workspace:FindFirstChild("Terrain")  -- Ищем Terrain
                 if terrain then
-                    local pumpkins = {}
+                    local pumpkins = {}  -- Список тыкв
                     for _, pumpkin in ipairs(terrain:GetChildren()) do
                         if pumpkin:IsA("Model") and pumpkin:FindFirstChild("PrimaryPart") and pumpkin.Name == "Pumpkin" then
-                            table.insert(pumpkins, pumpkin)
+                            table.insert(pumpkins, pumpkin)  -- Добавляем тыкву в список
                         end
                     end
 
+                    -- Если тыквы найдены
                     if #pumpkins > 0 then
-                        local targetPumpkin = pumpkins[math.random(#pumpkins)]
+                        local targetPumpkin = pumpkins[math.random(#pumpkins)]  -- Случайная тыква
                         local targetCFrame = CFrame.new(targetPumpkin.PrimaryPart.Position + Vector3.new(0, 5, 0))
                         
-                        local tweenInfo = TweenInfo.new(2)
+                        -- Создаём tween для плавного перемещения
+                        local tweenInfo = TweenInfo.new(2)  -- Длительность 2 секунды
                         local goal = {CFrame = targetCFrame}
                         local moveTween = tweenService:Create(humanoidRootPart, tweenInfo, goal)
                         
                         moveTween:Play()
-                        moveTween.Completed:Wait()
+                        moveTween.Completed:Wait()  -- Ждём завершения tween перед переходом к следующей тыкве
                     else
+                        -- Если тыкв нет, остаёмся на месте
                         wait(1)
                     end
                 end
-                wait(0.5)
+                wait(0.5)  -- Проверка каждые 0.5 секунд
             end
         end)
     end
@@ -112,9 +115,9 @@ local function toggleAutoFarm()
     debounce = false
 end
 
--- Обработка нажатия на ползунок
+-- Обработчик клика по ползунку
 toggleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleAutoFarm()
+        toggleAutoFarm()  -- Включение/выключение автофарма
     end
 end)
