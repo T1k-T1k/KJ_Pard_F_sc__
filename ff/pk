@@ -85,6 +85,7 @@ local function toggleAutoFarm()
                 local terrain = workspace:FindFirstChild("Terrain")
                 if terrain then
                     local pumpkins = {} -- Массив для хранения тыкв
+                    -- Перебираем все объекты в Terrain
                     for _, terrainObject in pairs(terrain:GetChildren()) do
                         if terrainObject:IsA("Model") and terrainObject.Name == "Pumpkin" then
                             local primaryPart = terrainObject:FindFirstChild("PrimaryPart") -- Проверяем наличие PrimaryPart
