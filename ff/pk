@@ -66,14 +66,13 @@ minimizeButton.MouseButton1Click:Connect(function()
     tween:Play()
 end)
 
--- Функция для включения/выключения автофарма
 local function toggleAutoFarm()
     if debounce then return end
     debounce = true
 
     autoFarmEnabled = not autoFarmEnabled
 
-    -- Анимация ползунка
+    -- Анимация ползунка с проверкой
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
     local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
@@ -113,7 +112,7 @@ local function toggleAutoFarm()
     debounce = false
 end
 
--- Проверка нажатия на ползунок
+-- Исправление нажатия на ползунок
 toggleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         print("Toggle clicked")  -- Проверка нажатия на ползунок
@@ -127,10 +126,3 @@ if humanoidRootPart then
 else
     warn("HumanoidRootPart not found!")
 end
-
--- Обработка нажатия на ползунок
-toggleFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleAutoFarm()
-    end
-end)
