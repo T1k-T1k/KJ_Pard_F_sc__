@@ -14,7 +14,6 @@ local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем мод
 local teleportTimer = 60 -- Интервал телепортации в секундах
 local stopDuration = 6 -- Длительность паузы автофермы
 local position = Vector3.new(245, -19, 345)
-local isPaused = false 
 local teleportTimer = teleportInterval
 
 local function createSafetyPlatform(position)
