@@ -173,61 +173,64 @@ local function toggleAutoFarm()
 if autoFarmEnabled then
     spawn(function()
         while autoFarmEnabled do
-            if not isPaused then
-                -- Основной цикл автофермы
-                local terrain = workspace:FindFirstChild("Terrain")
-                local pumpkins = {}
+            local terrain = workspace:FindFirstChild("Terrain")
+            local pumpkins = {}
+            
+            -- Поиск тыкв
+            if terrain then
+                for _, obj in pairs(terrain:GetChildren()) do
+                    if obj:IsA("Model") and obj.Name == "Pumpkin" then
+                        table.insert(pumpkins, obj)
+                    end
+                end
+            end
+            
+            -- Проверяем наличие тыкв
+            if #pumpkins > 0 then
+                for _, pumpkin in pairs(pumpkins) do
+                    local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
+                    if primaryPart then
+                        local targetPosition = primaryPart.Position
+                        local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)  -- Под тыквой на глубине
 
-                -- Поиск тыкв
-                if terrain then
+                        -- Перемещение под тыкву
+                        local moveToBelowTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.25), {CFrame = CFrame.new(belowPosition)})
+                        moveToBelowTween:Play()
+                        moveToBelowTween.Completed:Wait()
+
+                        -- Подъём к тыкве
+                        local riseTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(targetPosition)})
+                        riseTween:Play()
+                        riseTween.Completed:Wait()
+
+                        wait(waitTime)  -- Пауза после подъёма
+
+                        -- Спуск обратно на глубину
+                        local descendTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(belowPosition)})
+                        descendTween:Play()
+                        descendTween.Completed:Wait()
+
+                        wait(0.3)  -- Пауза перед переходом к следующей тыкве
+                    else
+                        print("No valid part found for pumpkin.")
+                    end
+                end
+            else
+                -- Если тыквы не найдены, останавливаем поиск и ждём появления новых тыкв
+                print("No pumpkins found. Waiting for pumpkins...")
+
+                -- Ждём появления тыквы
+                repeat
+                    wait(0.7)  -- Проверка 
+                    pumpkins = {}
                     for _, obj in pairs(terrain:GetChildren()) do
                         if obj:IsA("Model") and obj.Name == "Pumpkin" then
                             table.insert(pumpkins, obj)
                         end
                     end
-                end
+                until #pumpkins > 0
 
-                -- Проверка наличия тыкв
-                if #pumpkins > 0 then
-                    for _, pumpkin in pairs(pumpkins) do
-                        local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
-                        if primaryPart then
-                            local targetPosition = primaryPart.Position
-                            local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)
-
-                            -- Перемещение под тыкву
-                            local moveToBelowTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.25), {CFrame = CFrame.new(belowPosition)})
-                            moveToBelowTween:Play()
-                            moveToBelowTween.Completed:Wait()
-
-                            -- Подъём к тыкве
-                            local riseTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(targetPosition)})
-                            riseTween:Play()
-                            riseTween.Completed:Wait()
-
-                            wait(waitTime)
-
-                            -- Спуск обратно на глубину
-                            local descendTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(belowPosition)})
-                            descendTween:Play()
-                            descendTween.Completed:Wait()
-
-                            wait(0.3)
-                        end
-                    end
-                else
-                    print("No pumpkins found. Waiting for pumpkins...")
-                    repeat
-                        wait(0.7)
-                        pumpkins = {}
-                        for _, obj in pairs(terrain:GetChildren()) do
-                            if obj:IsA("Model") and obj.Name == "Pumpkin" then
-                                table.insert(pumpkins, obj)
-                            end
-                        end
-                    until #pumpkins > 0
-                    print("Pumpkin found. Continuing farming...")
-                end
+                print("Pumpkin found. Continuing farming...")
             end
         end
     end)
