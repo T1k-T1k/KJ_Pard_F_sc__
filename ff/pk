@@ -5,6 +5,97 @@ local runService = game:GetService("RunService")
 local tweenService = game:GetService("TweenService")
 local autoFarmEnabled = false
 local debounce = false
+local waitingPosition = Vector3.new(500, 500, 500)
+local waitTime = 0.15  -- Задержка перед опусканием после подъёма
+local depthOffset = 45 -- Глубина ниже карты, на которой летает персонаж
+local returnPosition = humanoidRootPart.Position
+local playerName = game.Players.LocalPlayer.Name -- Получаем имя игрока, который запустил скрипт
+local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем модель игрока в workspace
+local teleportTimer = 60 -- Интервал телепортации в секундах
+local stopDuration = 6 -- Длительность паузы автофермы
+local position = Vector3.new(245, -19, 345)
+local isPaused = false 
+local teleportTimer = teleportInterval
+
+local function createSafetyPlatform(position)
+    local platform = Instance.new("Part")
+    platform.Size = Vector3.new(5, 1, 5)  -- Размер платформы (достаточно большой для игрока)
+    platform.Position = position - Vector3.new(0, 3, 0)  -- Под платформой для телепортации
+    platform.Anchored = true
+    platform.CanCollide = true  -- Коллизия включена, чтобы игрок стоял на ней
+    platform.Transparency = 1   -- Невидимая платформа
+    platform.Parent = workspace
+    return platform
+end
+
+-- Если модель игрока найдена
+if playerModel then
+    -- Ищем скрипт FallDamage внутри модели игрока в workspace
+    local fallDamageScriptInModel = playerModel:FindFirstChild("FallDamage")
+
+    -- Если скрипт найден, удаляем его
+    if fallDamageScriptInModel then
+        fallDamageScriptInModel:Destroy()
+        print("Скрипт 'FallDamage' был удален из модели игрока в workspace.")
+    else
+        print("Скрипт 'FallDamage' не найден в модели игрока в workspace.")
+    end
+else
+    print("Модель игрока с именем " .. playerName .. " не найдена в Workspace.")
+end
+
+-- Ищем скрипт FallDamage в StarterPlayer > StarterCharacterScripts
+local fallDamageScriptInStarterCharacter = game.StarterPlayer.StarterCharacterScripts:FindFirstChild("FallDamage")
+-- Если скрипт найден, удаляем его
+if fallDamageScriptInStarterCharacter then
+    fallDamageScriptInStarterCharacter:Destroy()
+    print("Скрипт 'FallDamage' был удален из StarterPlayer > StarterCharacterScripts.")
+else
+    print("Скрипт 'FallDamage' не найден в StarterPlayer > StarterCharacterScripts.")
+end
+
+-- Удаление Killbrick при запуске
+local scriptedFolder = workspace:FindFirstChild("Scripted")
+if scriptedFolder then
+    local killbrickFolder = scriptedFolder:FindFirstChild("Killbrick")
+    if killbrickFolder then
+        killbrickFolder:Destroy()
+        print("Killbrick folder deleted.")
+    end
+end
+
+-- Функция создания платформы FallProtector
+local function createFallProtector()
+    local existingPlatform = workspace:FindFirstChild("FallProtector")
+    if not existingPlatform then
+        local platform = Instance.new("Part")
+        platform.Name = "FallProtector"
+        platform.Size = Vector3.new(5000, 100, 5000)
+        platform.Position = Vector3.new(0, -103, 0)
+        platform.Anchored = true
+        platform.CanCollide = true
+        platform.Color = Color3.fromRGB(255, 255, 255)  -- Белый цвет
+        platform.Parent = workspace
+        print("FallProtector platform created.")
+    end
+end
+
+-- Вызов функции создания платформы FallProtector при запуске скрипта
+createFallProtector()
+
+-- Функция создания невидимого и недоступного Part
+local function createInvisiblePart(position)
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1, 1, 1)  -- Маленький размер
+    part.Position = position
+    part.Anchored = true
+    part.CanCollide = false  -- Не будет взаимодействовать с другими объектами
+    part.Transparency = 1  -- Сделаем его невидимым
+    part.Parent = workspace
+    return part
+end
+
+local teleportPart = createInvisiblePart(position)
 
 -- GUI create
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -79,46 +170,76 @@ local function toggleAutoFarm()
 
     print("AutoFarm State Changed:", autoFarmEnabled) -- Проверка состояния автофарма
 
-    if autoFarmEnabled then
-        spawn(function()
-            while autoFarmEnabled do
+if autoFarmEnabled then
+    spawn(function()
+        while autoFarmEnabled do
+            if not isPaused then
+                -- Основной цикл автофермы
                 local terrain = workspace:FindFirstChild("Terrain")
+                local pumpkins = {}
+
+                -- Поиск тыкв
                 if terrain then
-                    local pumpkins = {} -- Массив для хранения тыкв
-                    -- Проходим по всем детям Terrain
-                    for _, object in pairs(terrain:GetChildren()) do
-                        if object:IsA("Model") and object.Name == "Pumpkin" then
-                            local primaryPart = object:FindFirstChild("PrimaryPart") -- Проверяем наличие PrimaryPart
-                            if primaryPart then
-                                local targetPosition = primaryPart.Position + Vector3.new(0, 5, 0)  -- Позиция тыквы + смещение по оси Y
-
-                                -- Печать найденной позиции
-                                print("Moving to Pumpkin at:", targetPosition)
-
-                                -- Перемещаем персонажа
-                                humanoidRootPart.CFrame = CFrame.new(targetPosition)
-
-                                -- Ожидаем небольшое время перед движением к следующей тыкве
-                                wait(1)
-                            else
-                                print("No PrimaryPart found for pumpkin.")
-                            end
+                    for _, obj in pairs(terrain:GetChildren()) do
+                        if obj:IsA("Model") and obj.Name == "Pumpkin" then
+                            table.insert(pumpkins, obj)
                         end
                     end
                 end
-                wait(0.5)  -- Задержка перед следующим поиском
+
+                -- Проверка наличия тыкв
+                if #pumpkins > 0 then
+                    for _, pumpkin in pairs(pumpkins) do
+                        local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
+                        if primaryPart then
+                            local targetPosition = primaryPart.Position
+                            local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)
+
+                            -- Перемещение под тыкву
+                            local moveToBelowTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.25), {CFrame = CFrame.new(belowPosition)})
+                            moveToBelowTween:Play()
+                            moveToBelowTween.Completed:Wait()
+
+                            -- Подъём к тыкве
+                            local riseTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(targetPosition)})
+                            riseTween:Play()
+                            riseTween.Completed:Wait()
+
+                            wait(waitTime)
+
+                            -- Спуск обратно на глубину
+                            local descendTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(belowPosition)})
+                            descendTween:Play()
+                            descendTween.Completed:Wait()
+
+                            wait(0.3)
+                        end
+                    end
+                else
+                    print("No pumpkins found. Waiting for pumpkins...")
+                    repeat
+                        wait(0.7)
+                        pumpkins = {}
+                        for _, obj in pairs(terrain:GetChildren()) do
+                            if obj:IsA("Model") and obj.Name == "Pumpkin" then
+                                table.insert(pumpkins, obj)
+                            end
+                        end
+                    until #pumpkins > 0
+                    print("Pumpkin found. Continuing farming...")
+                end
             end
-        end)
-    end
-    
+        end
+    end)
+end
     debounce = false
 end
 
 -- Исправление нажатия на ползунок
 toggleFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        print("Toggle clicked")  -- Проверка нажатия на ползунок
-        toggleAutoFarm()
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    print("Toggle clicked")  -- Проверка нажатия на ползунок
+    toggleAutoFarm()
     end
 end)
 
