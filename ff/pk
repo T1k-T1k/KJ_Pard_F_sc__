@@ -11,8 +11,8 @@ local depthOffset = 45 -- Глубина ниже карты, на которо�
 local returnPosition = humanoidRootPart.Position
 local playerName = game.Players.LocalPlayer.Name -- Получаем имя игрока, который запустил скрипт
 local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем модель игрока в workspace
-local timerDuration = 6  -- Длительность таймера
-local standDuration = 6    -- Время стояния на парте
+local timerDuration = 4  -- Длительность таймера
+local standDuration = 12   -- Время стояния на парте
 
 -- Проверка на существование SalePart
 local salePart = workspace:FindFirstChild("SalePart")
