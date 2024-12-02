@@ -11,20 +11,20 @@ local depthOffset = 45 -- Глубина ниже карты, на которо�
 local returnPosition = humanoidRootPart.Position
 local playerName = game.Players.LocalPlayer.Name -- Получаем имя игрока, который запустил скрипт
 local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем модель игрока в workspace
-local teleportTimer = 60 -- Интервал телепортации в секундах
-local stopDuration = 6 -- Длительность паузы автофермы
-local position = Vector3.new(245, -19, 345)
-local teleportTimer = teleportInterval
+local timerDuration = 6  -- Длительность таймера
+local standDuration = 6    -- Время стояния на парте
 
-local function createSafetyPlatform(position)
-    local platform = Instance.new("Part")
-    platform.Size = Vector3.new(5, 1, 5)  -- Размер платформы (достаточно большой для игрока)
-    platform.Position = position - Vector3.new(0, 3, 0)  -- Под платформой для телепортации
-    platform.Anchored = true
-    platform.CanCollide = true  -- Коллизия включена, чтобы игрок стоял на ней
-    platform.Transparency = 1   -- Невидимая платформа
-    platform.Parent = workspace
-    return platform
+-- Проверка на существование SalePart
+local salePart = workspace:FindFirstChild("SalePart")
+if not salePart then
+    -- Если SalePart не найден, создаем его
+    salePart = Instance.new("Part")
+    salePart.Name = "SalePart"
+    salePart.Size = Vector3.new(6, 1, 6)
+    salePart.Position = Vector3.new(250.5, -23, 345)
+    salePart.Color = Color3.new(1, 1, 1)  -- Белый цвет
+    salePart.Anchored = true
+    salePart.Parent = workspace
 end
 
 -- Если модель игрока найдена
@@ -81,20 +81,6 @@ end
 
 -- Вызов функции создания платформы FallProtector при запуске скрипта
 createFallProtector()
-
--- Функция создания невидимого и недоступного Part
-local function createInvisiblePart(position)
-    local part = Instance.new("Part")
-    part.Size = Vector3.new(1, 1, 1)  -- Маленький размер
-    part.Position = position
-    part.Anchored = true
-    part.CanCollide = false  -- Не будет взаимодействовать с другими объектами
-    part.Transparency = 1  -- Сделаем его невидимым
-    part.Parent = workspace
-    return part
-end
-
-local teleportPart = createInvisiblePart(position)
 
 -- GUI create
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -186,11 +172,12 @@ if autoFarmEnabled then
             
             -- Проверяем наличие тыкв
             if #pumpkins > 0 then
+                -- Собираем тыквы
                 for _, pumpkin in pairs(pumpkins) do
                     local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
                     if primaryPart then
                         local targetPosition = primaryPart.Position
-                        local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)  -- Под тыквой на глубине
+                        local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)
 
                         -- Перемещение под тыкву
                         local moveToBelowTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.25), {CFrame = CFrame.new(belowPosition)})
@@ -202,34 +189,37 @@ if autoFarmEnabled then
                         riseTween:Play()
                         riseTween.Completed:Wait()
 
-                        wait(waitTime)  -- Пауза после подъёма
+                        wait(waitTime)
 
                         -- Спуск обратно на глубину
                         local descendTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(belowPosition)})
                         descendTween:Play()
                         descendTween.Completed:Wait()
 
-                        wait(0.3)  -- Пауза перед переходом к следующей тыкве
+                        wait(0.3)
                     else
                         print("No valid part found for pumpkin.")
                     end
                 end
             else
-                -- Если тыквы не найдены, останавливаем поиск и ждём появления новых тыкв
-                print("No pumpkins found. Waiting for pumpkins...")
-
-                -- Ждём появления тыквы
-                repeat
-                    wait(0.7)  -- Проверка 
-                    pumpkins = {}
-                    for _, obj in pairs(terrain:GetChildren()) do
-                        if obj:IsA("Model") and obj.Name == "Pumpkin" then
-                            table.insert(pumpkins, obj)
-                        end
-                    end
-                until #pumpkins > 0
-
-                print("Pumpkin found. Continuing farming...")
+                -- Если тыквы не найдены
+                print("No pumpkins found. Starting timer...")
+                
+                -- Запуск таймера на 35 секунд
+                wait(timerDuration)
+                
+                -- Определяем левую часть парта (сдвигаем на половину размера по X)
+                local leftPosition = salePart.Position - Vector3.new(salePart.Size.X / 2, 0, 0)
+                
+                -- Перемещение персонажа к левой части SalePart
+                local moveToSaleTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.5), {CFrame = CFrame.new(leftPosition)})
+                moveToSaleTween:Play()
+                moveToSaleTween.Completed:Wait()
+                
+                -- Ожидание на парте
+                wait(standDuration)
+                
+                print("Returning to pumpkin farming...")
             end
         end
     end)
