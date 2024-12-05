@@ -14,6 +14,10 @@ local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем мод
 local timerDuration = 4  -- Длительность таймера
 local standDuration = 12   -- Время стояния на парте
 
+if game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue() > 100 then
+    wait(1)  -- Увеличиваем задержку при высоком пинге
+end
+
 -- Проверка на существование SalePart
 local salePart = workspace:FindFirstChild("SalePart")
 if not salePart then
@@ -158,6 +162,7 @@ local function toggleAutoFarm()
 if autoFarmEnabled then
     spawn(function()
         while autoFarmEnabled do
+            wait(0.1)
             local terrain = workspace:FindFirstChild("Terrain")
             local pumpkins = {}
             
