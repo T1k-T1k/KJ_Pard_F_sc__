@@ -172,11 +172,6 @@ local function toggleAutoFarm()
 if autoFarmEnabled then
     spawn(function()
         while autoFarmEnabled do
-        if game:GetService("Stats").PerformanceStats["FPS"]:GetValue() < 30 then
-            warn("Низкий FPS, приостанавливаем фарм")
-            safeWait(1)  -- Увеличенная пауза для восстановления производительности
-            continue
-        end
             wait(0.1)
             local terrain = workspace:FindFirstChild("Terrain")
             local pumpkins = {}
