@@ -141,13 +141,14 @@ local function toggleAutoFarm()
     local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
 
+-- [[ Main Auto Farm Cycle ]]
 if autoFarmEnabled then
     spawn(function()
         -- Camera setup for Auto Farm
         local Players = game:GetService("Players")
         local player = Players.LocalPlayer
         local camera = workspace.CurrentCamera
-        print("Starting Farm !")
+        print("[[ Starting Auto Farm! ]]")
 
         -- Camera settings
         local cameraOffset = Vector3.new(16, 2.5, 0)
@@ -162,7 +163,7 @@ if autoFarmEnabled then
             if character and character:FindFirstChild("HumanoidRootPart") then
                 local rootPart = character.HumanoidRootPart
 
-                 -- Calculating the camera position
+                -- Calculating the camera position
                 local cameraPosition = rootPart.Position + cameraOffset
                 local lookAtPosition = rootPart.Position
 
@@ -178,6 +179,13 @@ if autoFarmEnabled then
         local characterAddedConnection
         characterAddedConnection = player.CharacterAdded:Connect(function(character)
             character:WaitForChild("HumanoidRootPart")
+    
+            -- Сбрасываем настройки камеры на стандартные
+            local cameraD = workspace.CurrentCamera
+            cameraD.CameraType = Enum.CameraType.Custom
+            cameraD.CFrame = CFrame.new(character.HumanoidRootPart.Position + Vector3.new(0, 5, -10), character.HumanoidRootPart.Position)
+
+            -- Вызываем обновление камеры (если нужно для автофарма)
             updateCamera()
         end)
 
@@ -252,4 +260,4 @@ toggleFrame.InputBegan:Connect(function(input)
     end
 end)
 
-print("Script loaded sucсessfully !")
+print("[[ Script loaded Sucсessfully! ]]")
