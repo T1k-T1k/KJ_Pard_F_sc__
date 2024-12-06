@@ -7,8 +7,6 @@ local autoFarmEnabled = false
 local debounce = false
 local waitTime = 0.15  -- Delay before descending after ascending
 local depthOffset = 42.5 -- Depth below the map where the character hovers
-local playerName = game.Players.LocalPlayer.Name -- Get the name of the player who started the script
-local playerModel = game.Workspace:FindFirstChild(playerName) -- Search for the player's model in workspace
 local timerDuration = 4  -- Timer duration
 local standDuration = 12   -- Time spent standing on the SalePart
 
