@@ -157,46 +157,46 @@ local function toggleAutoFarm()
 
 if autoFarmEnabled then
     spawn(function()
+        local terrain = workspace:FindFirstChild("Terrain")
+        local tweenInfoFast = TweenInfo.new(0.4)
+        local tweenInfoSlow = TweenInfo.new(1.25)
+        local tweenInfoMoveToSale = TweenInfo.new(1.5)
+        
         while autoFarmEnabled do
-            local terrain = workspace:FindFirstChild("Terrain")
             local pumpkins = {}
-            
-            -- Поиск тыкв
+
+            -- Поиск тыкв (однократно для каждого цикла)
             if terrain then
-                for _, obj in pairs(terrain:GetChildren()) do
+                for _, obj in ipairs(terrain:GetChildren()) do
                     if obj:IsA("Model") and obj.Name == "Pumpkin" then
                         table.insert(pumpkins, obj)
                     end
                 end
             end
-            
-            -- Проверяем наличие тыкв
+
+            -- Если тыквы найдены
             if #pumpkins > 0 then
-                -- Собираем тыквы
-                for _, pumpkin in pairs(pumpkins) do
+                for _, pumpkin in ipairs(pumpkins) do
                     local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
                     if primaryPart then
                         local targetPosition = primaryPart.Position
                         local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)
 
                         -- Перемещение под тыкву
-                        local moveToBelowTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.25), {CFrame = CFrame.new(belowPosition)})
-                        moveToBelowTween:Play()
-                        moveToBelowTween.Completed:Wait()
+                        tweenService:Create(humanoidRootPart, tweenInfoSlow, {CFrame = CFrame.new(belowPosition)}):Play()
+                        task.wait(1.25)
 
                         -- Подъём к тыкве
-                        local riseTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(targetPosition)})
-                        riseTween:Play()
-                        riseTween.Completed:Wait()
+                        tweenService:Create(humanoidRootPart, tweenInfoFast, {CFrame = CFrame.new(targetPosition)}):Play()
+                        task.wait(0.4)
 
-                        wait(waitTime)
+                        task.wait(waitTime)
 
                         -- Спуск обратно на глубину
-                        local descendTween = tweenService:Create(humanoidRootPart, TweenInfo.new(0.4), {CFrame = CFrame.new(belowPosition)})
-                        descendTween:Play()
-                        descendTween.Completed:Wait()
+                        tweenService:Create(humanoidRootPart, tweenInfoFast, {CFrame = CFrame.new(belowPosition)}):Play()
+                        task.wait(0.4)
 
-                        wait(0.3)
+                        task.wait(0.3)
                     else
                         print("No valid part found for pumpkin.")
                     end
@@ -204,21 +204,17 @@ if autoFarmEnabled then
             else
                 -- Если тыквы не найдены
                 print("No pumpkins found. Starting timer...")
-                
-                -- Запуск таймера на 35 секунд
-                wait(timerDuration)
-                
-                -- Определяем левую часть парта (сдвигаем на половину размера по X)
+                task.wait(timerDuration)
+
                 local leftPosition = salePart.Position - Vector3.new(salePart.Size.X / 2, 0, 0)
-                
+
                 -- Перемещение персонажа к левой части SalePart
-                local moveToSaleTween = tweenService:Create(humanoidRootPart, TweenInfo.new(1.5), {CFrame = CFrame.new(leftPosition)})
-                moveToSaleTween:Play()
-                moveToSaleTween.Completed:Wait()
-                
+                tweenService:Create(humanoidRootPart, tweenInfoMoveToSale, {CFrame = CFrame.new(leftPosition)}):Play()
+                task.wait(1.5)
+
                 -- Ожидание на парте
-                wait(standDuration)
-                
+                task.wait(standDuration)
+
                 print("Returning to pumpkin farming...")
             end
         end
