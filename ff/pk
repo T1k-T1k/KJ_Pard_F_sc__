@@ -24,9 +24,9 @@ if not salePart then
 end
 
 -- Remove Killbrick on startup
-local scriptedFolder = workspace:FindFirstChild("Scripted")
+local scriptedFolder = workspace.Scripted 
 if scriptedFolder then
-    local killbrickFolder = scriptedFolder:FindFirstChild("Killbrick")
+    local killbrickFolder = scriptedFolder.Killbrick
     if killbrickFolder then
         killbrickFolder:Destroy()
     end
