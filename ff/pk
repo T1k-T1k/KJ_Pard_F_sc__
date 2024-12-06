@@ -157,15 +157,53 @@ local function toggleAutoFarm()
 
 if autoFarmEnabled then
     spawn(function()
+        -- Настройка камеры для автофарма
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local camera = workspace.CurrentCamera
+
+        -- Параметры камеры
+        local cameraOffset = Vector3.new(16, 2.5, 0)
+        local cameraDistance = 13
+
+        -- Установка фиксированной камеры
+        camera.CameraType = Enum.CameraType.Scriptable
+
+        -- Функция обновления позиции камеры
+        local function updateCamera()
+            local character = player.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local rootPart = character.HumanoidRootPart
+
+                -- Расчёт позиции камеры
+                local cameraPosition = rootPart.Position + cameraOffset
+                local lookAtPosition = rootPart.Position
+
+                -- Установка позиции и направления камеры
+                camera.CFrame = CFrame.new(cameraPosition, lookAtPosition)
+            end
+        end
+
+        -- Подписка на обновление позиции камеры
+        local renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(updateCamera)
+
+        -- Автоматическое обновление камеры при респавне игрока
+        local characterAddedConnection
+        characterAddedConnection = player.CharacterAdded:Connect(function(character)
+            character:WaitForChild("HumanoidRootPart")
+            updateCamera()
+        end)
+
+        -- Основной цикл автофарма
         local terrain = workspace:FindFirstChild("Terrain")
         local tweenInfoFast = TweenInfo.new(0.4)
         local tweenInfoSlow = TweenInfo.new(1.25)
         local tweenInfoMoveToSale = TweenInfo.new(1.5)
-        
+
         while autoFarmEnabled do
             local pumpkins = {}
 
-            -- Поиск тыкв (однократно для каждого цикла)
+            -- Поиск тыкв
             if terrain then
                 for _, obj in ipairs(terrain:GetChildren()) do
                     if obj:IsA("Model") and obj.Name == "Pumpkin" then
@@ -174,7 +212,6 @@ if autoFarmEnabled then
                 end
             end
 
-            -- Если тыквы найдены
             if #pumpkins > 0 then
                 for _, pumpkin in ipairs(pumpkins) do
                     local primaryPart = pumpkin.PrimaryPart or pumpkin:FindFirstChildWhichIsA("BasePart")
@@ -182,17 +219,14 @@ if autoFarmEnabled then
                         local targetPosition = primaryPart.Position
                         local belowPosition = targetPosition - Vector3.new(0, depthOffset, 0)
 
-                        -- Перемещение под тыкву
                         tweenService:Create(humanoidRootPart, tweenInfoSlow, {CFrame = CFrame.new(belowPosition)}):Play()
                         task.wait(1.25)
 
-                        -- Подъём к тыкве
                         tweenService:Create(humanoidRootPart, tweenInfoFast, {CFrame = CFrame.new(targetPosition)}):Play()
                         task.wait(0.4)
 
                         task.wait(waitTime)
 
-                        -- Спуск обратно на глубину
                         tweenService:Create(humanoidRootPart, tweenInfoFast, {CFrame = CFrame.new(belowPosition)}):Play()
                         task.wait(0.4)
 
@@ -202,22 +236,26 @@ if autoFarmEnabled then
                     end
                 end
             else
-                -- Если тыквы не найдены
                 print("No pumpkins found. Starting timer...")
                 task.wait(timerDuration)
 
                 local leftPosition = salePart.Position - Vector3.new(salePart.Size.X / 2, 0, 0)
 
-                -- Перемещение персонажа к левой части SalePart
                 tweenService:Create(humanoidRootPart, tweenInfoMoveToSale, {CFrame = CFrame.new(leftPosition)}):Play()
                 task.wait(1.5)
 
-                -- Ожидание на парте
                 task.wait(standDuration)
 
                 print("Returning to pumpkin farming...")
             end
         end
+
+        -- Завершение работы камеры при отключении автофарма
+        renderSteppedConnection:Disconnect()
+        if characterAddedConnection then
+            characterAddedConnection:Disconnect()
+        end
+        camera.CameraType = Enum.CameraType.Custom -- Возвращение управления камерой
     end)
 end
     debounce = false
