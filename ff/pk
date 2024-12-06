@@ -5,19 +5,17 @@ local runService = game:GetService("RunService")
 local tweenService = game:GetService("TweenService")
 local autoFarmEnabled = false
 local debounce = false
-local waitingPosition = Vector3.new(500, 500, 500)
-local waitTime = 0.15  -- Задержка перед опусканием после подъёма
-local depthOffset = 45 -- Глубина ниже карты, на которой летает персонаж
-local returnPosition = humanoidRootPart.Position
-local playerName = game.Players.LocalPlayer.Name -- Получаем имя игрока, который запустил скрипт
-local playerModel = game.Workspace:FindFirstChild(playerName) -- Ищем модель игрока в workspace
-local timerDuration = 4  -- Длительность таймера
-local standDuration = 12   -- Время стояния на парте
+local waitTime = 0.15  -- Delay before descending after ascending
+local depthOffset = 42.5 -- Depth below the map where the character hovers
+local playerName = game.Players.LocalPlayer.Name -- Get the name of the player who started the script
+local playerModel = game.Workspace:FindFirstChild(playerName) -- Search for the player's model in workspace
+local timerDuration = 4  -- Timer duration
+local standDuration = 12   -- Time spent standing on the SalePart
 
--- Проверка на существование SalePart
+-- Check if SalePart exists
 local salePart = workspace:FindFirstChild("SalePart")
 if not salePart then
-    -- Если SalePart не найден, создаем его
+    -- If SalePart is not found, create it
     salePart = Instance.new("Part")
     salePart.Name = "SalePart"
     salePart.Size = Vector3.new(6, 1, 6)
@@ -27,43 +25,33 @@ if not salePart then
     salePart.Parent = workspace
 end
 
--- Если модель игрока найдена
 if playerModel then
-    -- Ищем скрипт FallDamage внутри модели игрока в workspace
+    -- Search for the FallDamage script inside the player's model in the workspace
     local fallDamageScriptInModel = playerModel:FindFirstChild("FallDamage")
 
-    -- Если скрипт найден, удаляем его
+    -- If the script is found, delete it
     if fallDamageScriptInModel then
         fallDamageScriptInModel:Destroy()
-        print("Скрипт 'FallDamage' был удален из модели игрока в workspace.")
-    else
-        print("Скрипт 'FallDamage' не найден в модели игрока в workspace.")
     end
-else
-    print("Модель игрока с именем " .. playerName .. " не найдена в Workspace.")
 end
 
--- Ищем скрипт FallDamage в StarterPlayer > StarterCharacterScripts
+-- Search for the FallDamage script in StarterPlayer > StarterCharacterScripts
 local fallDamageScriptInStarterCharacter = game.StarterPlayer.StarterCharacterScripts:FindFirstChild("FallDamage")
--- Если скрипт найден, удаляем его
+-- If the script is found, delete it
 if fallDamageScriptInStarterCharacter then
     fallDamageScriptInStarterCharacter:Destroy()
-    print("Скрипт 'FallDamage' был удален из StarterPlayer > StarterCharacterScripts.")
-else
-    print("Скрипт 'FallDamage' не найден в StarterPlayer > StarterCharacterScripts.")
 end
 
--- Удаление Killbrick при запуске
+-- Remove Killbrick on startup
 local scriptedFolder = workspace:FindFirstChild("Scripted")
 if scriptedFolder then
     local killbrickFolder = scriptedFolder:FindFirstChild("Killbrick")
     if killbrickFolder then
         killbrickFolder:Destroy()
-        print("Killbrick folder deleted.")
     end
 end
 
--- Функция создания платформы FallProtector
+-- Function to create the FallProtector platform
 local function createFallProtector()
     local existingPlatform = workspace:FindFirstChild("FallProtector")
     if not existingPlatform then
@@ -75,17 +63,16 @@ local function createFallProtector()
         platform.CanCollide = true
         platform.Color = Color3.fromRGB(255, 255, 255)  -- Белый цвет
         platform.Parent = workspace
-        print("FallProtector platform created.")
     end
 end
 
--- Вызов функции создания платформы FallProtector при запуске скрипта
+-- Call the function to create the FallProtector platform on script startup
 createFallProtector()
 
 -- GUI create
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
--- upper panel
+-- Upper panel
 local topFrame = Instance.new("Frame", screenGui)
 topFrame.Size = UDim2.new(0, 300, 0, 30)
 topFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
@@ -94,7 +81,7 @@ topFrame.BorderSizePixel = 0
 topFrame.Draggable = true
 topFrame.Active = true
 
--- text and a button to minimization
+-- Text and a button to minimization
 local title = Instance.new("TextLabel", topFrame)
 title.Size = UDim2.new(1, -35, 1, 0)
 title.Text = "Auto Farm Pumpkins"
@@ -109,7 +96,7 @@ minimizeButton.Text = "-"
 minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 minimizeButton.BackgroundTransparency = 1
 
--- toggle
+-- Toggle
 local sliderFrame = Instance.new("Frame", topFrame)
 sliderFrame.Size = UDim2.new(1, 0, 0, 70)
 sliderFrame.Position = UDim2.new(0, 0, 1, 0)
@@ -133,7 +120,7 @@ buttonCorner.CornerRadius = UDim.new(1, 0)
 local toggleCorner = Instance.new("UICorner", toggleFrame)
 toggleCorner.CornerRadius = UDim.new(0, 20)
 
--- minimization animation
+-- Minimization animation
 local isMinimized = false
 minimizeButton.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -142,59 +129,59 @@ minimizeButton.MouseButton1Click:Connect(function()
     tween:Play()
 end)
 
+-- Toggle function for AutoFarm
 local function toggleAutoFarm()
     if debounce then return end
     debounce = true
 
     autoFarmEnabled = not autoFarmEnabled
 
-    -- Анимация ползунка с проверкой
+    -- Slider animation with check
     local targetPosition = autoFarmEnabled and UDim2.new(0.6, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
     local tween = tweenService:Create(toggleButton, TweenInfo.new(0.5), {Position = targetPosition})
     tween:Play()
 
-    print("AutoFarm State Changed:", autoFarmEnabled) -- Проверка состояния автофарма
-
 if autoFarmEnabled then
     spawn(function()
-        -- Настройка камеры для автофарма
+        -- Camera setup for Auto Farm
         local Players = game:GetService("Players")
         local player = Players.LocalPlayer
         local camera = workspace.CurrentCamera
+        print("Starting Farm !")
 
-        -- Параметры камеры
+        -- Camera settings
         local cameraOffset = Vector3.new(16, 2.5, 0)
         local cameraDistance = 13
 
-        -- Установка фиксированной камеры
+        -- Installing a fixed camera
         camera.CameraType = Enum.CameraType.Scriptable
 
-        -- Функция обновления позиции камеры
+        -- Camera position update function
         local function updateCamera()
             local character = player.Character
             if character and character:FindFirstChild("HumanoidRootPart") then
                 local rootPart = character.HumanoidRootPart
 
-                -- Расчёт позиции камеры
+                 -- Calculating the camera position
                 local cameraPosition = rootPart.Position + cameraOffset
                 local lookAtPosition = rootPart.Position
 
-                -- Установка позиции и направления камеры
+                -- Setting the position and direction of the camera
                 camera.CFrame = CFrame.new(cameraPosition, lookAtPosition)
             end
         end
 
-        -- Подписка на обновление позиции камеры
+        -- Variable to update the camera position
         local renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(updateCamera)
 
-        -- Автоматическое обновление камеры при респавне игрока
+        -- Automatic camera update when player respawns
         local characterAddedConnection
         characterAddedConnection = player.CharacterAdded:Connect(function(character)
             character:WaitForChild("HumanoidRootPart")
             updateCamera()
         end)
 
-        -- Основной цикл автофарма
+        -- Main Auto Farm Cycle
         local terrain = workspace:FindFirstChild("Terrain")
         local tweenInfoFast = TweenInfo.new(0.4)
         local tweenInfoSlow = TweenInfo.new(1.25)
@@ -203,7 +190,7 @@ if autoFarmEnabled then
         while autoFarmEnabled do
             local pumpkins = {}
 
-            -- Поиск тыкв
+            -- Searching for pumpkins
             if terrain then
                 for _, obj in ipairs(terrain:GetChildren()) do
                     if obj:IsA("Model") and obj.Name == "Pumpkin" then
@@ -236,7 +223,6 @@ if autoFarmEnabled then
                     end
                 end
             else
-                print("No pumpkins found. Starting timer...")
                 task.wait(timerDuration)
 
                 local leftPosition = salePart.Position - Vector3.new(salePart.Size.X / 2, 0, 0)
@@ -245,33 +231,25 @@ if autoFarmEnabled then
                 task.wait(1.5)
 
                 task.wait(standDuration)
-
-                print("Returning to pumpkin farming...")
             end
         end
 
-        -- Завершение работы камеры при отключении автофарма
+        -- Termination of the user camera when Auto Farm is disabled
         renderSteppedConnection:Disconnect()
         if characterAddedConnection then
             characterAddedConnection:Disconnect()
         end
-        camera.CameraType = Enum.CameraType.Custom -- Возвращение управления камерой
+        camera.CameraType = Enum.CameraType.Custom -- Returning control of the camera
     end)
 end
     debounce = false
 end
 
--- Исправление нажатия на ползунок
+-- Fix for toggle slider clicks
 toggleFrame.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-    print("Toggle clicked")  -- Проверка нажатия на ползунок
-    toggleAutoFarm()
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        toggleAutoFarm()
     end
 end)
 
--- Проверка готовности персонажа
-if humanoidRootPart then
-    print("HumanoidRootPart found:", humanoidRootPart)
-else
-    warn("HumanoidRootPart not found!")
-end
+print("Script loaded sucсessfully !")
