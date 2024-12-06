@@ -25,23 +25,6 @@ if not salePart then
     salePart.Parent = workspace
 end
 
-if playerModel then
-    -- Search for the FallDamage script inside the player's model in the workspace
-    local fallDamageScriptInModel = playerModel:FindFirstChild("FallDamage")
-
-    -- If the script is found, delete it
-    if fallDamageScriptInModel then
-        fallDamageScriptInModel:Destroy()
-    end
-end
-
--- Search for the FallDamage script in StarterPlayer > StarterCharacterScripts
-local fallDamageScriptInStarterCharacter = game.StarterPlayer.StarterCharacterScripts:FindFirstChild("FallDamage")
--- If the script is found, delete it
-if fallDamageScriptInStarterCharacter then
-    fallDamageScriptInStarterCharacter:Destroy()
-end
-
 -- Remove Killbrick on startup
 local scriptedFolder = workspace:FindFirstChild("Scripted")
 if scriptedFolder then
